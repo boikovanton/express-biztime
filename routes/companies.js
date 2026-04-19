@@ -52,7 +52,17 @@ router.get("/:code", async function (req, res, next) {
         [req.params.code]
       );
   
-      company.invoices = invoicesResult.rows.map(i => i.id);
+      const industriesResult = await db.query(
+        `SELECT i.industry
+         FROM industries AS i
+         JOIN company_industries AS ci
+           ON i.code = ci.ind_code
+         WHERE ci.comp_code = $1`,
+        [req.params.code]
+      );
+  
+      company.invoices = invoicesResult.rows.map(r => r.id);
+      company.industries = industriesResult.rows.map(r => r.industry);
   
       return res.json({ company });
     } catch (err) {

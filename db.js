@@ -1,9 +1,12 @@
-/** Database setup for BizTime. */
-
 const { Client } = require("pg");
 
+const DB_URI =
+  process.env.NODE_ENV === "test"
+    ? "biztime_test"
+    : "biztime";
+
 const db = new Client({
-  database: "biztime"
+  database: DB_URI
 });
 
 db.connect();
