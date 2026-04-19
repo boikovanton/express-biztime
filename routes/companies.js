@@ -1,5 +1,6 @@
 const express = require("express");
 const db = require("../db");
+const ExpressError = require("../expressError");
 
 const router = new express.Router();
 
@@ -30,23 +31,34 @@ router.get("/", async function (req, res, next) {
  */
 
 router.get("/:code", async function (req, res, next) {
-  try {
-    const result = await db.query(
-      "SELECT code, name, description FROM companies WHERE code = $1",
-      [req.params.code]
-    );
-
-    const company = result.rows[0];
-
-    if (!company) {
-      return res.status(404).json({ error: "Company not found" });
+    try {
+      const companyResult = await db.query(
+        `SELECT code, name, description
+         FROM companies
+         WHERE code = $1`,
+        [req.params.code]
+      );
+  
+      const company = companyResult.rows[0];
+  
+      if (!company) {
+        throw new ExpressError("Company not found", 404);
+      }
+  
+      const invoicesResult = await db.query(
+        `SELECT id
+         FROM invoices
+         WHERE comp_code = $1`,
+        [req.params.code]
+      );
+  
+      company.invoices = invoicesResult.rows.map(i => i.id);
+  
+      return res.json({ company });
+    } catch (err) {
+      return next(err);
     }
-
-    return res.json({ company });
-  } catch (err) {
-    return next(err);
-  }
-});
+  });
 
 /** POST /companies
  *
